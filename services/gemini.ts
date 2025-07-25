@@ -2,10 +2,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { RoadmapStep } from "../types";
 
-const API_KEY = process.env.API_KEY;
+// Use import.meta.env for Vite environment variables
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+console.log('Environment:', {
+  isDev: import.meta.env.DEV,
+  mode: import.meta.env.MODE,
+  hasKey: !!API_KEY,
+  keyPrefix: API_KEY?.substring(0, 4) || 'none'
+});
 
 if (!API_KEY) {
-  throw new Error("Missing Google Gemini API key.");
+  throw new Error("Missing Gemini API key. Please check your environment variables.");
 }
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
@@ -75,9 +83,22 @@ export const generateRoadmap = async (careerGoal: string): Promise<RoadmapStep[]
 
   } catch (error) {
     console.error("Error generating roadmap:", error);
-    if (error instanceof Error) {
-        throw new Error(`Failed to generate roadmap: ${error.message}`);
+    
+    // Handle API key related errors
+    if (typeof error === 'object' && error !== null) {
+      const errorObj = error as any;
+      if (errorObj.error?.message?.includes('API key expired')) {
+        throw new Error('The API key has expired. Please update your Google Gemini API key in the environment variables.');
+      }
+      if (errorObj.error?.code === 400 && errorObj.error?.message?.includes('API key')) {
+        throw new Error('Invalid API key. Please check your Google Gemini API key configuration.');
+      }
     }
-    throw new Error("An unknown error occurred while generating the roadmap.");
+    
+    // Handle other types of errors
+    if (error instanceof Error) {
+      throw new Error(`Failed to generate roadmap: ${error.message}`);
+    }
+    throw new Error("An unexpected error occurred while generating the roadmap.");
   }
 };
