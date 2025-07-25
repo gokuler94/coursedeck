@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { RoadmapStep } from "../types";
 
 // Use import.meta.env for Vite environment variables
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const API_KEY = process.env.VITE_GEMINI_API_KEY;
 
 console.log('Environment:', {
   isDev: import.meta.env.DEV,
