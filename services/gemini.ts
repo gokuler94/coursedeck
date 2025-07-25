@@ -3,7 +3,17 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { RoadmapStep } from "../types";
 
 // Get API key from environment variables
-const apiKey = process.env.VITE_GEMINI_API_KEY;
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+// Debug environment information
+console.log('Environment debug:', {
+  mode: import.meta.env.MODE,
+  isProd: import.meta.env.PROD,
+  hasKey: !!apiKey,
+  keyLength: apiKey?.length || 0,
+  keyStart: apiKey?.substring(0, 4) || 'none',
+  env: import.meta.env
+});
 
 // Log environment status (but not the full key)
 console.log('Environment status:', {
@@ -87,7 +97,7 @@ export const generateRoadmap = async (careerGoal: string): Promise<RoadmapStep[]
       }
     });
     
-    const text = response.text.trim();
+    const text = response?.text?.trim();
     if (!text) {
         throw new Error("API returned an empty response.");
     }
