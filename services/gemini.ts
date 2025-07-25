@@ -2,23 +2,28 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { RoadmapStep } from "../types";
 
-// Get API key from environment variables
-const getApiKey = () => {
-  if (typeof import.meta.env.VITE_GEMINI_API_KEY !== 'string') {
-    throw new Error('Missing Google Gemini API key. Please check your environment variables.');
-  }
-  return import.meta.env.VITE_GEMINI_API_KEY;
-};
+// Get API key and validate it
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-const apiKey = getApiKey();
-
-// Debug environment information
-console.log('API Configuration:', {
-  keyExists: !!apiKey,
-  keyLength: apiKey.length,
-  environment: import.meta.env.MODE,
-  isDev: import.meta.env.DEV
+// Log environment status for debugging
+console.log('Gemini API Status:', {
+  hasKey: Boolean(apiKey),
+  keyLength: apiKey?.length || 0,
+  isDev: import.meta.env.DEV,
+  mode: import.meta.env.MODE
 });
+
+// Validate API key
+if (!apiKey) {
+  console.error('API Key validation failed:', {
+    keyExists: Boolean(apiKey),
+    envMode: import.meta.env.MODE
+  });
+  throw new Error('Missing Google Gemini API key');
+}
+
+// Initialize the API client
+const ai = new GoogleGenAI({ apiKey });
 
 // Log environment status (but not the full key)
 console.log('Environment status:', {
