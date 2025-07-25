@@ -29,7 +29,7 @@ const schema = {
 
 // Initialize API client
 const api = new GoogleGenAI({ 
-  apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyC2_BajQ89X1Ui2N8jafBQO4-m4Wt9VQ_c'
+  apiKey: import.meta.env.VITE_GEMINI_API_KEY 
 });
 
 // Log configuration
