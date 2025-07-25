@@ -29,8 +29,7 @@ const schema = {
 
 // Initialize API client
 const api = new GoogleGenAI({ 
-  apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyC2_BajQ89X1Ui2N8jafBQO4-m4Wt9VQ_c'
-});
+  apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
 // Log configuration
 console.log('Gemini API:', {
@@ -48,7 +47,7 @@ export const generateRoadmap = async (careerGoal: string): Promise<RoadmapStep[]
   try {
     // Validate environment
     if (!import.meta.env.VITE_GEMINI_API_KEY) {
-      throw new Error('Missing Gemini API key. Please check your environment configuration.');
+      throw new Error("Missing Google Gemini API key.");
     }
 
     // Generate content
