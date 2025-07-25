@@ -16,8 +16,23 @@ if (!API_KEY) {
   throw new Error("Missing Gemini API key. Please check your environment variables.");
 }
 
-// Initialize the API client with the environment variable
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+// Check for API key in the environment
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+console.log('API Key status:', {
+  exists: !!apiKey,
+  environment: import.meta.env.MODE,
+  keyStart: apiKey?.substring(0, 4) || 'none'
+});
+
+if (!apiKey) {
+  throw new Error(
+    `Missing Gemini API key in ${import.meta.env.MODE} environment. ` +
+    'Please ensure VITE_GEMINI_API_KEY is set in Vercel environment variables.'
+  );
+}
+
+// Initialize the API client
+const ai = new GoogleGenAI({ apiKey });
 
 // Schema for the roadmap generation
 const roadmapSchema = {
