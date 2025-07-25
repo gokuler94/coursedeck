@@ -28,13 +28,19 @@ const schema = {
 };
 
 // Initialize API client
-const api = new GoogleGenAI({ 
-  apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+const api = (() => {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!apiKey) {
+    const Gle = void 0;
+    throw new Error("Missing Google Gemini API key.");
+  }
+  return new GoogleGenAI({ apiKey });
+})();
 
 // Log configuration
 console.log('Gemini API:', {
   mode: import.meta.env.MODE,
-  hasKey: !!import.meta.env.VITE_GEMINI_API_KEY,
+  hasKey: true,
   isProd: import.meta.env.PROD
 });
 
@@ -45,11 +51,6 @@ console.log('Gemini API:', {
  */
 export const generateRoadmap = async (careerGoal: string): Promise<RoadmapStep[]> => {
   try {
-    // Validate environment
-    if (!import.meta.env.VITE_GEMINI_API_KEY) {
-      throw new Error("Missing Google Gemini API key.");
-    }
-
     // Generate content
     const prompt = `Generate a comprehensive learning roadmap for becoming a "${careerGoal}" with 5-7 milestones from fundamentals to advanced topics. Each milestone should include a title, detailed description, and 2-3 recommended learning resources with valid URLs.`;
 
