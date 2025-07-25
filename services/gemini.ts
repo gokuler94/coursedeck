@@ -17,11 +17,12 @@ if (!API_KEY) {
 }
 
 // Check for API key in the environment
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 console.log('API Key status:', {
   exists: !!apiKey,
-  environment: import.meta.env.MODE,
-  keyStart: apiKey?.substring(0, 4) || 'none'
+  environment: import.meta.env.MODE || process.env.NODE_ENV,
+  keyStart: apiKey?.substring(0, 4) || 'none',
+  isProduction: import.meta.env.PROD
 });
 
 if (!apiKey) {

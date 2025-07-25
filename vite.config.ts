@@ -11,8 +11,11 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
     ],
     define: {
-      // Ensure environment variables are properly stringified
-      __VITE_GEMINI_API_KEY__: JSON.stringify(env.VITE_GEMINI_API_KEY || ''),
+      // Make env variables available at runtime
+      'process.env': {
+        VITE_GEMINI_API_KEY: JSON.stringify(process.env.VITE_GEMINI_API_KEY || env.VITE_GEMINI_API_KEY),
+        NODE_ENV: JSON.stringify(mode)
+      }
     },
     envPrefix: ['VITE_'],
     resolve: {
