@@ -2,33 +2,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { RoadmapStep } from "../types";
 
-// Use import.meta.env for Vite environment variables
-const API_KEY = process.env.VITE_GEMINI_API_KEY;
+// Get API key from environment variables
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-console.log('Environment:', {
-  isDev: import.meta.env.DEV,
+// Log environment status (but not the full key)
+console.log('Environment status:', {
   mode: import.meta.env.MODE,
-  hasKey: !!API_KEY,
-  keyPrefix: API_KEY?.substring(0, 4) || 'none'
-});
-
-if (!API_KEY) {
-  throw new Error("Missing Gemini API key. Please check your environment variables.");
-}
-
-// Check for API key in the environment
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
-console.log('API Key status:', {
-  exists: !!apiKey,
-  environment: import.meta.env.MODE || process.env.NODE_ENV,
-  keyStart: apiKey?.substring(0, 4) || 'none',
-  isProduction: import.meta.env.PROD
+  isDev: import.meta.env.DEV,
+  isProd: import.meta.env.PROD,
+  hasKey: !!apiKey,
+  keyPrefix: apiKey?.substring(0, 4) || 'none'
 });
 
 if (!apiKey) {
   throw new Error(
     `Missing Gemini API key in ${import.meta.env.MODE} environment. ` +
-    'Please ensure VITE_GEMINI_API_KEY is set in Vercel environment variables.'
+    'Please ensure VITE_GEMINI_API_KEY is set in your .env file and Vercel environment variables.'
   );
 }
 
