@@ -2,153 +2,87 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { RoadmapStep } from "../types";
 
-class GeminiService {
-  private static instance: GoogleGenAI | null = null;
-  private static defaultApiKey = 'AIzaSyC2_BajQ89X1Ui2N8jafBQO4-m4Wt9VQ_c';
-
-  private static getApiKey(): string {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || this.defaultApiKey;
-
-    console.log('Gemini API Environment:', {
-      mode: import.meta.env.MODE,
-      isProduction: import.meta.env.PROD,
-      hasKey: Boolean(apiKey),
-      isVercel: import.meta.env.VERCEL
-    });
-
-    if (!apiKey) {
-      throw new Error('Missing Google Gemini API key');
-    }
-
-    return apiKey;
-  }
-
-  public static getInstance(): GoogleGenAI {
-    if (!this.instance) {
-      const apiKey = this.getApiKey();
-      this.instance = new GoogleGenAI({ apiKey });
-    }
-    return this.instance;
-  }
-}
-
-// Initialize the API client
-const ai = GeminiService.getInstance();
-
-// Log environment status (but not the full key)
-console.log('Environment status:', {
-  mode: import.meta.env.MODE,
-  isDev: import.meta.env.DEV,
-  isProd: import.meta.env.PROD,
-  hasKey: !!apiKey,
-  keyPrefix: apiKey?.substring(0, 4) || 'none'
-});
-
-if (!apiKey) {
-  throw new Error(
-    `Missing Gemini API key in ${import.meta.env.MODE} environment. ` +
-    'Please ensure VITE_GEMINI_API_KEY is set in your .env file and Vercel environment variables.'
-  );
-}
-
-// Initialize the API client
-const ai = new GoogleGenAI({ apiKey });
-
-// Schema for the roadmap generation
-const roadmapSchema = {
-    type: Type.ARRAY,
-    items: {
-      type: Type.OBJECT,
-      properties: {
-        title: {
-          type: Type.STRING,
-          description: "A concise title for this milestone (e.g., 'Mastering the Basics of Python')."
-        },
-        description: {
-          type: Type.STRING,
-          description: "A detailed one-paragraph summary of what to learn in this step."
-        },
-        resources: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              title: {
-                type: Type.STRING,
-                description: "The title of the recommended learning resource."
-              },
-              url: {
-                type: Type.STRING,
-                description: "A valid, full URL to the resource (e.g., article, tutorial, documentation)."
-              }
-            },
-            required: ["title", "url"]
+// Response schema for validation
+const schema = {
+  type: Type.ARRAY,
+  items: {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING, description: "A concise title for this milestone." },
+      description: { type: Type.STRING, description: "A detailed one-paragraph summary of what to learn in this step." },
+      resources: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING, description: "The title of the recommended learning resource." },
+            url: { type: Type.STRING, description: "A valid, full URL to the resource." }
           },
-          description: "A list of 2-3 recommended latest online learning resources which exists and no youtube links."
-        }
-      },
-      required: ["title", "description", "resources"]
-    }
+          required: ["title", "url"]
+        },
+        description: "A list of 2-3 recommended learning resources."
+      }
+    },
+    required: ["title", "description", "resources"]
+  }
 };
 
+// Initialize API client
+const api = new GoogleGenAI({ 
+  apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyC2_BajQ89X1Ui2N8jafBQO4-m4Wt9VQ_c'
+});
+
+// Log configuration
+console.log('Gemini API:', {
+  mode: import.meta.env.MODE,
+  hasKey: !!import.meta.env.VITE_GEMINI_API_KEY,
+  isProd: import.meta.env.PROD
+});
+
+/**
+ * Generates a learning roadmap for a given career goal using the Gemini API.
+ * @param careerGoal - The career or skill target to generate a roadmap for
+ * @returns A promise resolving to an array of roadmap steps
+ */
 export const generateRoadmap = async (careerGoal: string): Promise<RoadmapStep[]> => {
   try {
-    // Check environment in production
-    if (import.meta.env.PROD) {
-      console.log('Production environment check:', {
-        hasKey: !!import.meta.env.VITE_GEMINI_API_KEY,
-        keyLength: import.meta.env.VITE_GEMINI_API_KEY?.length || 0,
-        keyPrefix: import.meta.env.VITE_GEMINI_API_KEY?.substring(0, 4) || 'none'
-      });
-    }
-
-    const prompt = `Generate a comprehensive, step-by-step learning roadmap for becoming a "${careerGoal}". The roadmap should consist of 5 to 7 distinct milestones, starting from fundamentals and progressing to advanced topics. For each milestone, provide a concise title, a detailed one-paragraph description of the key concepts to learn, and a list of 2-3 highly-rated, recommended online resources like articles, tutorials, or documentation. Ensure each resource includes a title and a valid, full URL.`;
-
+    // Validate environment
     if (!import.meta.env.VITE_GEMINI_API_KEY) {
-      throw new Error('Gemini API key is not configured in environment variables');
+      throw new Error('Missing Gemini API key. Please check your environment configuration.');
     }
 
-    const response = await ai.models.generateContent({
+    // Generate content
+    const prompt = `Generate a comprehensive learning roadmap for becoming a "${careerGoal}" with 5-7 milestones from fundamentals to advanced topics. Each milestone should include a title, detailed description, and 2-3 recommended learning resources with valid URLs.`;
+
+    const response = await api.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
-        responseSchema: roadmapSchema,
+        responseSchema: schema
       }
     });
-    
+
+    // Parse and validate
     const text = response?.text?.trim();
-    if (!text) {
-        throw new Error("API returned an empty response.");
-    }
+    if (!text) throw new Error("Empty API response");
 
-    const parsedResponse = JSON.parse(text);
+    const data = JSON.parse(text);
+    if (!Array.isArray(data)) throw new Error("Invalid response format");
 
-    // Basic validation
-    if (!Array.isArray(parsedResponse)) {
-        throw new Error("API response is not an array.");
-    }
-    
-    return parsedResponse as RoadmapStep[];
+    return data as RoadmapStep[];
 
-  } catch (error) {
-    console.error("Error generating roadmap:", error);
-    
-    // Handle API key related errors
-    if (typeof error === 'object' && error !== null) {
-      const errorObj = error as any;
-      if (errorObj.error?.message?.includes('API key expired')) {
-        throw new Error('The API key has expired. Please update your Google Gemini API key in the environment variables.');
+  } catch (err: unknown) {
+    console.error("Roadmap generation error:", err);
+
+    if (err instanceof Error) {
+      // Check for API key issues
+      if (err.message.includes('API key')) {
+        throw new Error('API key configuration error');
       }
-      if (errorObj.error?.code === 400 && errorObj.error?.message?.includes('API key')) {
-        throw new Error('Invalid API key. Please check your Google Gemini API key configuration.');
-      }
+      throw new Error(`Generation failed: ${err.message}`);
     }
-    
-    // Handle other types of errors
-    if (error instanceof Error) {
-      throw new Error(`Failed to generate roadmap: ${error.message}`);
-    }
-    throw new Error("An unexpected error occurred while generating the roadmap.");
+
+    throw new Error("Unexpected error during roadmap generation");
   }
 };
