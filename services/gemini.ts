@@ -2,36 +2,38 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { RoadmapStep } from "../types";
 
-function getApiKey(): string {
-  // Try multiple ways to get the API key
-  const apiKey = 
-    import.meta.env.VITE_GEMINI_API_KEY || 
-    (window as any).__GEMINI_API_KEY__ ||
-    process.env.VITE_GEMINI_API_KEY;
+class GeminiService {
+  private static instance: GoogleGenAI | null = null;
+  private static defaultApiKey = 'AIzaSyC2_BajQ89X1Ui2N8jafBQO4-m4Wt9VQ_c';
 
-  // Log environment status for debugging
-  console.log('Gemini API Configuration:', {
-    hasKey: Boolean(apiKey),
-    keyLength: apiKey?.length || 0,
-    environment: import.meta.env.MODE,
-    isDev: import.meta.env.DEV,
-    isProd: import.meta.env.PROD
-  });
+  private static getApiKey(): string {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || this.defaultApiKey;
 
-  if (!apiKey) {
-    console.error('API Key not found in:', {
-      importMeta: Boolean(import.meta.env.VITE_GEMINI_API_KEY),
-      processEnv: Boolean(process.env.VITE_GEMINI_API_KEY),
-      windowVar: Boolean((window as any).__GEMINI_API_KEY__)
+    console.log('Gemini API Environment:', {
+      mode: import.meta.env.MODE,
+      isProduction: import.meta.env.PROD,
+      hasKey: Boolean(apiKey),
+      isVercel: import.meta.env.VERCEL
     });
-    throw new Error('Missing Google Gemini API key');
+
+    if (!apiKey) {
+      throw new Error('Missing Google Gemini API key');
+    }
+
+    return apiKey;
   }
 
-  return apiKey;
+  public static getInstance(): GoogleGenAI {
+    if (!this.instance) {
+      const apiKey = this.getApiKey();
+      this.instance = new GoogleGenAI({ apiKey });
+    }
+    return this.instance;
+  }
 }
 
 // Initialize the API client
-const ai = new GoogleGenAI({ apiKey: getApiKey() });
+const ai = GeminiService.getInstance();
 
 // Log environment status (but not the full key)
 console.log('Environment status:', {

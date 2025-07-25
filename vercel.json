@@ -1,0 +1,8 @@
+{
+  "buildCommand": "vite build",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "env": {
+    "VITE_GEMINI_API_KEY": "AIzaSyC2_BajQ89X1Ui2N8jafBQO4-m4Wt9VQ_c"
+  }
+}

@@ -3,31 +3,33 @@ import { defineConfig, loadEnv } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode, command }) => {
-  // Load env files (.env, .env.production)
-  const env = loadEnv(mode, process.cwd(), 'VITE_');
+  // Load environment variables from multiple sources
+  const loadedEnv = loadEnv(mode, process.cwd(), 'VITE_');
+  const vercelEnv = process.env.VERCEL === '1';
   
-  // Log environment info during build
-  if (command === 'build') {
-    console.log('Build Environment:', {
-      mode,
-      command,
-      hasGeminiKey: !!env.VITE_GEMINI_API_KEY,
-      envVars: Object.keys(env).filter(key => key.startsWith('VITE_'))
-    });
-  }
+  // Determine the API key from various sources
+  const geminiApiKey = process.env.VITE_GEMINI_API_KEY || 
+                      loadedEnv.VITE_GEMINI_API_KEY || 
+                      'AIzaSyC2_BajQ89X1Ui2N8jafBQO4-m4Wt9VQ_c';
   
+  console.log('Vite Build Config:', {
+    mode,
+    command,
+    isVercel: vercelEnv,
+    hasGeminiKey: !!geminiApiKey
+  });
+
   return {
     plugins: [
       tailwindcss(),
     ],
     define: {
-      // Make sure environment variables are available at runtime
-      __GEMINI_API_KEY__: JSON.stringify(env.VITE_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY),
-      'process.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY),
-      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY),
+      // Define environment variables that will be replaced at build time
+      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(geminiApiKey),
       'import.meta.env.MODE': JSON.stringify(mode),
       'import.meta.env.DEV': mode === 'development',
-      'import.meta.env.PROD': mode === 'production'
+      'import.meta.env.PROD': mode === 'production',
+      'import.meta.env.VERCEL': vercelEnv
     },
     resolve: {
       alias: {
