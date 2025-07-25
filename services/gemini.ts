@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { RoadmapStep } from "../types";
 
 // Get API key from environment variables
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const apiKey = process.env.VITE_GEMINI_API_KEY;
 
 // Log environment status (but not the full key)
 console.log('Environment status:', {
