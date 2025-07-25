@@ -16,8 +16,10 @@ if (!API_KEY) {
   throw new Error("Missing Gemini API key. Please check your environment variables.");
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+// Initialize the API client with the environment variable
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
+// Schema for the roadmap generation
 const roadmapSchema = {
     type: Type.ARRAY,
     items: {
@@ -56,7 +58,20 @@ const roadmapSchema = {
 
 export const generateRoadmap = async (careerGoal: string): Promise<RoadmapStep[]> => {
   try {
+    // Check environment in production
+    if (import.meta.env.PROD) {
+      console.log('Production environment check:', {
+        hasKey: !!import.meta.env.VITE_GEMINI_API_KEY,
+        keyLength: import.meta.env.VITE_GEMINI_API_KEY?.length || 0,
+        keyPrefix: import.meta.env.VITE_GEMINI_API_KEY?.substring(0, 4) || 'none'
+      });
+    }
+
     const prompt = `Generate a comprehensive, step-by-step learning roadmap for becoming a "${careerGoal}". The roadmap should consist of 5 to 7 distinct milestones, starting from fundamentals and progressing to advanced topics. For each milestone, provide a concise title, a detailed one-paragraph description of the key concepts to learn, and a list of 2-3 highly-rated, recommended online resources like articles, tutorials, or documentation. Ensure each resource includes a title and a valid, full URL.`;
+
+    if (!import.meta.env.VITE_GEMINI_API_KEY) {
+      throw new Error('Gemini API key is not configured in environment variables');
+    }
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
